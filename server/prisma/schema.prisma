@@ -1,0 +1,42 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Location {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  lat         Float
+  lng         Float
+  category    String
+  createdAt   DateTime @default(now())
+}
+
+model Road {
+  id         String   @id @default(cuid())
+  name       String
+  type       String
+  coordinates String   // JSON stringified array of [lat, lng]
+  createdAt  DateTime @default(now())
+}
+
+model Event {
+  id                  String   @id @default(cuid())
+  name                String
+  description         String
+  date                String
+  time                String
+  venue               String
+  category            String
+  organizer           String
+  registrationRequired Boolean
+  capacity            Int
+  registeredCount     Int
+  tags                String   // JSON stringified array of strings
+  createdAt           DateTime @default(now())
+}

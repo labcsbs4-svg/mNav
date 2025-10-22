@@ -1,0 +1,26 @@
+@import 'leaflet/dist/leaflet.css';
+
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+.leaflet-div-icon {
+  background: transparent;
+  border: none;
+}
+
+/* #jotform-iframe-container {
+  bottom: 100px !important;
+} */

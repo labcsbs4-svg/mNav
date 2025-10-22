@@ -1,0 +1,125 @@
+import React, { useEffect, useState } from 'react';
+import { Building } from '../types/campus';
+import L from 'leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Initialize Leaflet's default icon
+if (typeof window !== 'undefined') {
+  delete (L.Icon.Default.prototype as any)._getIconUrl;
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+  });
+}
+
+// User location icon
+const userIcon = new L.Icon({
+  iconUrl: 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmZmZmYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0iIzM0ODVmZiIvPjwvc3ZnPg==',
+  iconSize: [24, 24],
+  iconAnchor: [12, 12],
+  popupAnchor: [0, -12],
+});
+
+interface MapWrapperProps {
+  buildings: Building[];
+  selectedBuilding: Building | null;
+  onBuildingSelect: (building: Building) => void;
+  showUserLocation: boolean;
+  userLocation: { latitude: number; longitude: number } | null;
+}
+
+export default function MapWrapper({
+  buildings,
+  selectedBuilding,
+  onBuildingSelect,
+  showUserLocation,
+  userLocation,
+}: MapWrapperProps) {
+  const defaultPosition: [number, number] = [40.7485, -73.9864];
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (typeof window === 'undefined' || !isMounted) {
+    return null;
+  }
+
+  const mapPosition = selectedBuilding 
+    ? [selectedBuilding.latitude, selectedBuilding.longitude] as [number, number]
+    : defaultPosition;
+
+  return (
+    <div className="relative w-full h-full">
+      <MapContainer
+        key={`map-${selectedBuilding?.id || 'default'}`}
+        center={mapPosition}
+        zoom={selectedBuilding ? 17 : 15}
+        style={{ height: '100%', width: '100%' }}
+        scrollWheelZoom={true}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        
+        {buildings.map((building) => (
+          <Marker
+            key={building.id}
+            position={[building.latitude, building.longitude]}
+            eventHandlers={{
+              click: () => onBuildingSelect(building),
+            }}
+          >
+            <Popup>
+              <div className="p-2">
+                <h4 className="font-semibold">{building.name}</h4>
+                <p className="text-sm text-gray-600">{building.code}</p>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {showUserLocation && userLocation && (
+          <Marker
+            position={[userLocation.latitude, userLocation.longitude]}
+            icon={userIcon}
+          >
+            <Popup>You are here</Popup>
+          </Marker>
+        )}
+      </MapContainer>
+    </div>
+  );
+      
+      {buildings.map((building) => (
+        <Marker
+          key={building.id}
+          position={[building.latitude, building.longitude]}
+          eventHandlers={{
+            click: () => onBuildingSelect(building),
+          }}
+        >
+          <Popup>
+            <div className="p-2">
+              <h4 className="font-semibold">{building.name}</h4>
+              <p className="text-sm text-gray-600">{building.code}</p>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+
+      {showUserLocation && userLocation && (
+        <Marker
+          position={[userLocation.latitude, userLocation.longitude]}
+          icon={userIcon}
+        >
+          <Popup>You are here</Popup>
+        </Marker>
+      )}
+    </MapContainer>
+  );
+}

@@ -1,0 +1,1 @@
+export type MapMode = 'view' | 'add-location' | 'draw-road' | 'plan-route' | 'delete-location' | 'delete-road';
