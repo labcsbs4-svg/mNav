@@ -9,7 +9,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { Compass, Pencil } from "lucide-react";
+import { Compass } from "lucide-react";
 import { MapControls } from "./MapControls";
 import { LocationModal } from "./LocationModal";
 import type { Location, Road, Route, MapState } from "../mapTypes/map";
@@ -128,7 +128,6 @@ const MapEventsHandler: React.FC<MapEventsHandlerProps> = ({
 };
 
 export const CustomMap: React.FC = () => {
-  const [isMapControlsOpen, setIsMapControlsOpen] = useState(false);
   const [mapState, setMapState] = useState<MapState>({
     center: [40.7128, -74.006], // Default to NYC
     zoom: 13,
@@ -1122,13 +1121,13 @@ export const CustomMap: React.FC = () => {
       // Dispatch navigation start event
       window.dispatchEvent(
         new CustomEvent("navigation-started", {
-          detail: { route: latestRoute, instructions: navigationInstructions },
+          detail: { route: latestRoute },
         })
       );
       setShowConfirmNavModal(false);
       setMode("view");
     }
-  }, [routes, navigationInstructions]);
+  }, [routes]);
 
   // Handle keyboard shortcuts for finishing drawing
   React.useEffect(() => {
@@ -1211,21 +1210,14 @@ export const CustomMap: React.FC = () => {
     >
       {mapState.isNavigating && navigationInstructions.length > 0 && (
         <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-[1000] bg-white rounded-lg shadow-lg p-4 max-w-sm w-full">
-          <div className="flex items-center">
-            <div className="mr-4">
-              <span className="text-3xl">➡️</span>
-            </div>
-            <div>
-              <p className="text-lg font-semibold text-gray-900">
-                {navigationInstructions[0]}
-              </p>
-              {navigationInstructions.length > 1 && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Next: {navigationInstructions[1]}
-                </p>
-              )}
-            </div>
-          </div>
+          <p className="text-lg font-semibold text-gray-900 text-center">
+            {navigationInstructions[0]}
+          </p>
+          {navigationInstructions.length > 1 && (
+            <p className="text-sm text-gray-600 text-center mt-1">
+              Next: {navigationInstructions[1]}
+            </p>
+          )}
         </div>
       )}
       <div
@@ -1375,29 +1367,19 @@ export const CustomMap: React.FC = () => {
       />
 
       {/* Controls */}
-      <button
-        onClick={() => setIsMapControlsOpen(!isMapControlsOpen)}
-        className="absolute top-4 left-4 z-[1001] bg-white rounded-full shadow-lg p-3 hover:bg-gray-100 transition-colors"
-        title="Toggle Map Controls"
-      >
-        <Pencil className="w-5 h-5 text-gray-700" />
-      </button>
-
-      {isMapControlsOpen && (
-        <MapControls
-          mode={mode}
-          setMode={setMode}
-          showLocations={showLocations}
-          setShowLocations={setShowLocations}
-          showRoads={showRoads}
-          setShowRoads={setShowRoads}
-          isNavigating={mapState.isNavigating}
-          onStartNavigation={handleStartNavigation}
-          onStopNavigation={handleStopNavigation}
-          onNorthUp={handleNorthUp}
-          userLocation={mapState.userLocation}
-        />
-      )}
+      <MapControls
+        mode={mode}
+        setMode={setMode}
+        showLocations={showLocations}
+        setShowLocations={setShowLocations}
+        showRoads={showRoads}
+        setShowRoads={setShowRoads}
+        isNavigating={mapState.isNavigating}
+        onStartNavigation={handleStartNavigation}
+        onStopNavigation={handleStopNavigation}
+        onNorthUp={handleNorthUp}
+        userLocation={mapState.userLocation}
+      />
       {/* Geolocation Menu */}
       {isGeoMenuOpen && (
         <div className="fixed top-24 right-6 z-[1000] bg-white rounded-md shadow p-3 text-sm max-w-xs">
@@ -1533,6 +1515,7 @@ export const CustomMap: React.FC = () => {
           </div>
         </div>
       )}
+
       {/* North Up Button */}
       {mapState.isNavigating && mapState.userLocation && (
         <button

@@ -1,7 +1,6 @@
-
-import { Building } from '../types/campus';
-import EmbeddedMap from './EmbeddedMap';
-import { CustomMap } from '../mapComponents/CustomMap';
+import { Building } from "../types/campus";
+import EmbeddedMap from "./EmbeddedMap";
+import { CustomMap } from "../mapComponents/CustomMap";
 
 interface MapWrapperProps {
   buildings: Building[];
@@ -9,7 +8,7 @@ interface MapWrapperProps {
   onBuildingSelect: (building: Building) => void;
   showUserLocation: boolean;
   userLocation: { latitude: number; longitude: number } | null;
-  mapType: 'google' | 'leaflet';
+  mapType: "google" | "leaflet";
 }
 
 export default function MapWrapper({
@@ -18,20 +17,21 @@ export default function MapWrapper({
   onBuildingSelect,
   showUserLocation,
   userLocation,
-  mapType
+  mapType,
 }: MapWrapperProps) {
-  
-  if (mapType === 'leaflet') {
+  if (mapType === "leaflet") {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-semibold text-gray-800">Interactive Campus Map</h3>
+          <h3 className="text-xl font-semibold text-gray-800">
+            Interactive Campus Map
+          </h3>
           <div className="flex items-center gap-2 text-sm text-green-600">
             <span className="h-2 w-2 bg-green-500 rounded-full animate-pulse"></span>
             <span>Live Leaflet Map</span>
           </div>
         </div>
-        
+
         <div className="w-full h-[400px] md:h-[500px] rounded-lg border border-gray-200 overflow-hidden">
           <CustomMap />
         </div>
