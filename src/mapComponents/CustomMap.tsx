@@ -22,7 +22,11 @@ import { DeletionModal } from "../components/DeletionModal";
 import { BackendBanner } from "../components/BackendBanner";
 import { DestinationModal } from "../components/DestinationModal";
 import { ConfirmNavigationModal } from "../components/ConfirmNavigationModal";
-import { routeAlongRoads } from "../utils/roadRouting";
+
+import {
+  routeAlongRoads,
+  findNearestRoadAndSegment,
+} from "../utils/roadRouting";
 import { useResetRoadColors } from "../hooks/useResetRoadColors";
 import {
   Plus,
@@ -70,7 +74,7 @@ const createCustomIcon = (category: Location["category"], name: string) => {
 
   return L.divIcon({
     html: `
-      <div style="display: flex; flex-direction: column; align-items: center; transform: translate(-50%, -100%);">
+      <div style="display: flex; flex-direction: column; align-items: center;">
         <div style="background: white; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border: 2px solid ${
           categoryColors[category as keyof typeof categoryColors]
         }; box-shadow: 0 2px 6px rgba(0,0,0,0.15); font-size: 9px;">
@@ -165,6 +169,10 @@ export const CustomMap: React.FC = () => {
   const [navigationInstructions, setNavigationInstructions] = useState<
     string[]
   >([]);
+
+  const [currentUserRoadSegment, setCurrentUserRoadSegment] = useState<
+    [[number, number], [number, number]] | null
+  >(null);
 
   // Navigation flow state
   const [navigationStep, setNavigationStep] = useState<"from" | "to">("from");
@@ -320,6 +328,12 @@ export const CustomMap: React.FC = () => {
     // auto-pan the map to user location
     if (mapRef.current) {
       mapRef.current.setView(userLocation, mapRef.current.getZoom());
+    }
+
+    // Find the nearest road segment to the user's current location
+    const nearestRoadInfo = findNearestRoadAndSegment(userLocation, roads);
+    if (nearestRoadInfo) {
+      setCurrentUserRoadSegment(nearestRoadInfo.segment);
     }
 
     // Check if user is close to the next waypoint to advance instructions
@@ -894,43 +908,6 @@ export const CustomMap: React.FC = () => {
     window.dispatchEvent(new CustomEvent("navigation-stopped"));
   }, []);
 
-  // Check if a road is part of the current route by comparing coordinates
-  const isRoadPartOfRoute = useCallback(
-    (road: Road, routeWaypoints: [number, number][]) => {
-      if (!routeWaypoints || routeWaypoints.length < 2) return false;
-
-      // Check if any road coordinate is close to any route segment
-      for (let i = 0; i < routeWaypoints.length - 1; i++) {
-        const [startLat, startLng] = routeWaypoints[i];
-        const [endLat, endLng] = routeWaypoints[i + 1];
-
-        for (const [roadLat, roadLng] of road.coordinates) {
-          // Check if road point is close to the route segment
-          const distToStart = haversineDistance(
-            roadLat,
-            roadLng,
-            startLat,
-            startLng
-          );
-          const distToEnd = haversineDistance(roadLat, roadLng, endLat, endLng);
-          const segmentLength = haversineDistance(
-            startLat,
-            startLng,
-            endLat,
-            endLng
-          );
-
-          // If road point is close to the segment (within 50m), consider it part of the route
-          if (distToStart + distToEnd <= segmentLength + 50) {
-            return true;
-          }
-        }
-      }
-      return false;
-    },
-    [haversineDistance]
-  );
-
   // handleGoToCurrentLocation removed — use requestOneOffLocation or geolocation hook instead
 
   // Compute a straight-line route and simple instructions from start to dest
@@ -1293,36 +1270,22 @@ export const CustomMap: React.FC = () => {
           {/* Roads */}
           {showRoads && (
             <React.Fragment key={roadsKey}>
-              {roads.map((road) => {
-                // Check if this road is part of the current navigated route
-                const isCurrentRoad =
-                  mapState.isNavigating &&
-                  mapState.currentRoute &&
-                  isRoadPartOfRoute(road, mapState.currentRoute.waypoints);
+              {/* Draw all roads with default color */}
+              {roads.map((road) => (
+                <Polyline
+                  key={road.id}
+                  positions={road.coordinates}
+                  pathOptions={{ color: "#10B981", weight: 4, opacity: 0.8 }}
+                />
+              ))}
 
-                // Debug logging using logger
-                if (mapState.isNavigating !== undefined) {
-                  logger.debug("[NAV-ROADS] Road color check", {
-                    roadId: road.id,
-                    isNavigating: mapState.isNavigating,
-                    hasCurrentRoute: !!mapState.currentRoute,
-                    isCurrentRoad,
-                    color: isCurrentRoad ? "#8B5CF6" : "#10B981",
-                  });
-                }
-
-                return (
-                  <Polyline
-                    key={road.id}
-                    positions={road.coordinates}
-                    pathOptions={{
-                      color: isCurrentRoad ? "#8B5CF6" : "#10B981",
-                      weight: 4,
-                      opacity: 0.8,
-                    }}
-                  />
-                );
-              })}
+              {/* Highlight the current route if navigating */}
+              {mapState.isNavigating && mapState.currentRoute && (
+                <Polyline
+                  positions={mapState.currentRoute.waypoints}
+                  pathOptions={{ color: "violet", weight: 6, opacity: 0.9 }}
+                />
+              )}
 
               {/* Current road being drawn */}
               {currentRoadPoints.length > 1 && (
@@ -1336,10 +1299,6 @@ export const CustomMap: React.FC = () => {
                   }}
                 />
               )}
-
-              {/* Routes - completely removed when navigation stops */}
-
-              {/* Route planning elements - completely removed when navigation stops */}
             </React.Fragment>
           )}
         </MapContainer>

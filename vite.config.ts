@@ -6,7 +6,11 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: "0.0.0.0",
-    allowedHosts: ["g3z45k-3000.csb.app"],
+    allowedHosts: [
+      "g3z45k-3000.csb.app",
+      "vnxdpt-3000.csb.app",
+      "vnxdpt-3001.csb.app",
+    ],
     port: 3000,
     proxy: {
       "/api": {
